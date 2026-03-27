@@ -1,0 +1,3 @@
+[submodule "Defactify_Image_Dataset"]
+	path = Defactify_Image_Dataset
+	url = https://huggingface.co/datasets/Rajarshi-Roy-research/Defactify_Image_Dataset

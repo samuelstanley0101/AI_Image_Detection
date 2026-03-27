@@ -1,1 +1,17 @@
 # Shortcuts for AI Image Detection
+
+## How to use this repository
+
+Before cloning the repository, ensure you have [git-lfs](https://git-lfs.com/) and [git-xet](https://huggingface.co/docs/hub/en/xet/using-xet-storage#git) installed. These are required to download the dataset.
+
+If cloning the repository to make changes, use the SSH address.
+
+```bash
+git clone --recurse-submodules git@github.com:samuelstanley0101/AI_Image_Detection.git
+```
+
+Otherwise use the HTTPS address. Note that the `--recurse-submodules` flag is removed, which means the dataset is **not** downloaded upon cloning the repository. To download the dataset after cloning, run `git submodule init` and `git submodule update`.
+
+```bash
+git clone https://github.com/samuelstanley0101/AI_Image_Detection
+```
