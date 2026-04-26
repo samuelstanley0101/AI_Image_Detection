@@ -1,1 +1,5 @@
 extracted_photo_features.csv filter=lfs diff=lfs merge=lfs -text
+balanced_training_features.csv filter=lfs diff=lfs merge=lfs -text
+extracted_training_features.csv filter=lfs diff=lfs merge=lfs -text
+extracted_validation_features.csv filter=lfs diff=lfs merge=lfs -text
+extracted_test_features.csv filter=lfs diff=lfs merge=lfs -text

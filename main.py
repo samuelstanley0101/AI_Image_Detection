@@ -1,134 +1,76 @@
-import cv2
-import numpy as np
-import matplotlib.pyplot as plt
-import pyarrow.parquet as pa
 import pandas as pd
-import io
-from PIL import Image
-import csv
-import os
-import glob
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, classification_report
+from sklearn.preprocessing import StandardScaler
 
-# ===== FEATURE EXTRACTION FUNCTIONS ===== 
-    
-def brightness(image):
-  # Use numpy to calculate mean pixel value in image
-  avgBrightness = np.mean(image)
-  return avgBrightness
+print('===== STARTING TRAINING AND VALIDATING =====')
+# LOAD TRAINING AND VALIDATION DATA
+trainDF = pd.read_csv('balanced_training_features.csv')
+valDF = pd.read_csv('extracted_validation_features.csv')
 
-def contrast(image):
-  # Use std() function to calculate standard deviation of image
-  contrast = image.std()
-  return contrast
+# CHECK FOR FAILED ROWS AND DROP THEM IF EMPTY
+trainDF = trainDF.dropna()
+valDF = valDF.dropna()
 
-def noise(image):
-  # Apply Gaussian blur to the grayscale image
-  blurredImage = cv2.GaussianBlur(image, (5, 5), 0)
-
-  # Calculate the noise by subtracting the blurred image from the original grayscale image
-  noise = image - blurredImage
-
-  # Calculate the mean and standard deviation of the noise
-  # Higher mean noise value indicates more noise in the image
-  # Higher standard deviation indicates more variable and less predictable noise
-  mean_noise = np.mean(noise)
-  std_noise = np.std(noise)
-
-  return mean_noise, std_noise
-
-
-# ================= START OF MAIN CODE =================
-
-# DEFINING CSV FILE PATH
-csvPath = 'extracted_photo_features.csv'
-
-# DEFINE COLUMNS OF CSV FILE
-field_names = [
-    'labelA',
-    'labelB',
-    'average_brightness',
-    'average_contrast',
-    'average_noise',
-    'noise_deviation'
+# SEPERATE FEATURES
+featureColumns = [
+    'average_brightness', 
+    'average_contrast', 
+    'average_noise', 
+    'noise_deviation',
+    'sharpness',
+    'edge_density',
+    'high_frequency'
 ]
 
-# CREATE THE CSV FILE AND WRITE THE HEADER ONLY IF IT DOESN'T EXIST
-if not os.path.isfile(csvPath):
-    with open(csvPath, mode='w', newline='') as file:
-        writer = csv.DictWriter(file, fieldnames=field_names)
-        writer.writeheader()
-    print(f"Created new file: {csvPath}")
-else:
-    print(f"File already exists, appending to: {csvPath}")
 
-# GET ALL TRAINING FILES
-trainFiles = glob.glob('Defactify_Image_Dataset/data/train-*.parquet')
+# SPLIT TRAINING DATA
+X_train = trainDF[featureColumns]
+y_train = trainDF['labelA']
 
-# SORT THE TRAINING FILES BY NAME 
-trainFiles.sort()
+# SPLIT VALIDATION DATA
+X_val = valDF[featureColumns]
+y_val = valDF['labelA']
 
-for path in trainFiles:
-    print(f"Starting extraction from file: {path}")
-    
-    # READ THE CURRENT TRAINING DATASET INTO PANDAS DATAFRAME
-    table = pa.read_table(path)
-    df = table.to_pandas()
+# INITALIZE MODEL
+model = LogisticRegression()
 
-    # LOOP OVER DATASET GETTING EACH ROW
-    for index, row in df.iterrows():
-        # UNCOMMENT TO SEE HOW THE IMAGES ARE STORED
-        #print(row['Image'])
+# TRAIN THE MODEL
+print("Training the model...")
+model.fit(X_train, y_train) 
+print("Training complete!")
 
-        photoLabelA = row['Label_A']
-        photoLabelB = row['Label_B']
+# VALIDATE THE MODEL
+print("\nPredicting on validation data...")
+predictions = model.predict(X_val)
 
-        # CONVERT BYTES TO IMAGE LIKE OBJECT
-        image_stream = io.BytesIO(row['Image']['bytes'])
+# COMPARE MODEL'S GUESSES
+accuracy = accuracy_score(y_val, predictions)
+print(f"Accuracy: {accuracy * 100:.2f}%\n")
 
-        # PROCESSING IMAGES
-        try:
-            # OPEN IMAGE
-            image = Image.open(image_stream)
-            
-            """
-            TEST IMAGE PROCESSING CODE
-            print(f"Image format: {image.format}")
-            print(f"Image size: {image.size}")
-            print(f"Image mode: {image.mode}")
+# PRINT REPORT (Precision, Recall, F1-Score)
+print("Detailed Classification Report:")
+print(classification_report(y_val, predictions, target_names=['Real (0)', 'AI (1)']))
 
-            # DO NOT USE =========================
-            # image.show()
-            # DO NOT USE =========================
-            """
-            # CONVERT PIL IMAGE TO NUMPY ARRAY
-            image = np.array(image) 
+print('===== FINISHED TRAINING AND VALIDATING STARTING TESTING=====')
 
-            # CONVERT FROM RGB TO BGR
-            cvImage = cv2.cvtColor(image, cv2.COLOR_RGB2BGR) 
+# LOAD THE TEST DATA SET AND DROP EMPTY ROWS
+testDF = pd.read_csv('extracted_test_features.csv')
+testDF = testDF.dropna()
 
-            # CONVERT FROM COLOR TO GRAYSCALE
-            grayImage = cv2.cvtColor(cvImage, cv2.COLOR_BGR2GRAY)
+# SEPERATE FEATURE COLUMNS
+X_test = testDF[featureColumns]
+y_test = testDF['labelA']
 
-            # GET PHOTO ATTRIBUTES
-            avgBright = brightness(grayImage)
-            avgContrast = contrast(grayImage)
-            avgNoise, avgNoiseDev = noise(grayImage)
 
-            # DICT TO INSERT INTO CSV FILE
-            rowData = {
-                'labelA': photoLabelA,
-                'labelB': photoLabelB,
-                'average_brightness': avgBright,
-                'average_contrast': avgContrast,
-                'average_noise': avgNoise,
-                'noise_deviation': avgNoiseDev
-            }
+# PREDICTING DATA
+print("Predicting on unseen test data...")
+test_predictions = model.predict(X_test)
 
-            # OPEN THE FILE IN APPEND MODE AND WRITE THE ROW
-            with open(csvPath, mode='a', newline='') as file:
-                writer = csv.DictWriter(file, fieldnames=field_names)
-                writer.writerow(rowData)
-        
-        except Exception as e:
-            print(f"Error opening image: {e}")
-    print(f'Finished extracting data from file: {path}')
+# PRINT FINAL REPORT
+test_accuracy = accuracy_score(y_test, test_predictions)
+print(f"Final Test Accuracy: {test_accuracy * 100:.2f}%\n")
+
+print("Final Test Classification Report:")
+print(classification_report(y_test, test_predictions, target_names=['Real (0)', 'AI (1)']))
+print('===== FINISHED TESTING =====')
