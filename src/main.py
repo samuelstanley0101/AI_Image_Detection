@@ -10,8 +10,8 @@ from sklearn.metrics import classification_report
 
 print('===== STARTING TRAINING AND VALIDATING =====')
 # LOAD TRAINING AND VALIDATION DATA
-trainDF = pd.read_csv('balanced_training_features.csv')
-valDF = pd.read_csv('extracted_validation_features.csv')
+trainDF = pd.read_csv('data/balanced_training_features.csv')
+valDF = pd.read_csv('data/extracted_validation_features.csv')
 
 # CHECK FOR FAILED ROWS AND DROP THEM IF EMPTY
 trainDF = trainDF.dropna()
@@ -60,7 +60,7 @@ print(classification_report(y_val, predictions, target_names=['Real (0)', 'AI (1
 print('===== FINISHED TRAINING AND VALIDATING STARTING TESTING=====')
 
 # LOAD THE TEST DATA SET AND DROP EMPTY ROWS
-testDF = pd.read_csv('extracted_test_features.csv')
+testDF = pd.read_csv('data/extracted_test_features.csv')
 testDF = testDF.dropna()
 
 # SEPERATE FEATURE COLUMNS
@@ -95,16 +95,16 @@ plt.ylim(0, 1.1)
 plt.legend(loc='lower right')
 plt.grid(axis='y', linestyle='--', alpha=0.7)
 
-plt.savefig('classification_report_chart.png', bbox_inches='tight')
+plt.savefig('outputs/classification_report_chart.png', bbox_inches='tight')
 print("Chart saved successfully as 'classification_report_chart.png'!")
 ConfusionMatrixDisplay.from_predictions(y_test, test_predictions, display_labels=['Real (0)', 'AI (1)'], cmap='Blues')
 
 plt.title('Test Dataset Confusion Matrix')
-plt.savefig('confusion_matrix.png', bbox_inches='tight')
+plt.savefig('outputs/confusion_matrix.png', bbox_inches='tight')
 print("Confusion Matrix saved successfully!")
 
 ConfusionMatrixDisplay.from_predictions(y_test, test_predictions, display_labels=['Real (0)', 'AI (1)'], cmap='Blues')
 
 plt.title('Test Dataset Confusion Matrix')
-plt.savefig('confusion_matrix.png', bbox_inches='tight')
+plt.savefig('outputs/confusion_matrix.png', bbox_inches='tight')
 print("Confusion Matrix saved successfully!")
